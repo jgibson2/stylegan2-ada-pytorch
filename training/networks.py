@@ -183,6 +183,7 @@ class MappingNetwork(torch.nn.Module):
         activation      = 'lrelu',  # Activation function: 'relu', 'lrelu', etc.
         lr_multiplier   = 0.01,     # Learning rate multiplier for the mapping layers.
         w_avg_beta      = 0.995,    # Decay for tracking the moving average of W during training, None = do not track.
+        gaussianize_w   = False     # If True, Gaussianize the distribution of w by removing the last nonlinearity
     ):
         super().__init__()
         self.z_dim = z_dim
@@ -205,7 +206,8 @@ class MappingNetwork(torch.nn.Module):
         for idx in range(num_layers):
             in_features = features_list[idx]
             out_features = features_list[idx + 1]
-            layer = FullyConnectedLayer(in_features, out_features, activation=activation, lr_multiplier=lr_multiplier)
+            act = 'linear' if gaussianize_w and idx == (num_layers - 1) else activation
+            layer = FullyConnectedLayer(in_features, out_features, activation=act, lr_multiplier=lr_multiplier)
             setattr(self, f'fc{idx}', layer)
 
         if num_ws is not None and w_avg_beta is not None:
